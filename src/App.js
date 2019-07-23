@@ -1,12 +1,16 @@
 import React, { Component } from 'react';
+
 import GuestList from './GuestList'
+import Counter from './Counter'
 import './App.css';
 
 class App extends Component {
   state = {
+    isFiltered: false,
+    pendingGuest: "",
     guests: [
       {
-        name: "Banks",
+        name: "Jae",
         isConfirmed: false,
         isEditing: false
       },
@@ -18,7 +22,7 @@ class App extends Component {
       {
         name: "Zubby",
         isConfirmed: false,
-        isEditing: true 
+        isEditing: false
       }
     ]
   }
@@ -37,11 +41,19 @@ class App extends Component {
 
     })
 
-  toggleComfirmationAt = index =>
+  toggleConfirmationAt = index =>
     this.toggleGuestPropertyAt("isConfirmed", index);
 
   toggleEditingAt = index =>
     this.toggleGuestPropertyAt("isEditing", index)
+
+  removeGuestAt = index =>
+    this.setState({
+      guests: [
+        ...this.state.guests.slice(0, index),
+        ...this.state.guests.slice(index + 1)
+      ]
+    })
 
   setNameAt = (name, indexToChange) =>
     this.setState({
@@ -57,17 +69,53 @@ class App extends Component {
 
     })
 
-  getTotalInvited = () => this.state.guest.length;
+  toggleFiltered = () =>
+    this.setState({
+      isFiltered: !this.state.isFiltered
+    })
 
+  handleNameIput = (e) =>
+    this.setState({
+      pendingGuest: e.target.value
+    })
+
+  newGuestsubmitDetails = (e) => {
+    e.preventDefault();
+    this.setState({
+      guests: [{
+        name: this.state.pendingGuest,
+        isConfirmed: false,
+        isEditing: false
+      },
+      ...this.state.guests
+      ],
+      //clear input field
+      pendingGuest: ""
+    })
+
+  }
+
+  getTotalInvited = () => this.state.guests.length;
+
+  getAttendingGuests = () =>
+    this.state.guests.reduce(
+      (total, guest) => guest.isConfirmed ? total + 1 : total, 0
+    );
 
   render() {
+    const totalNum = this.getTotalInvited();
+    const numAttending = this.getAttendingGuests();
+    const numUnconfirmed = this.getTotalInvited() - this.getAttendingGuests();
     return (
       <div className="AppMain">
         <header>
           <h1>RSVP</h1>
           <p>A basic invite App</p>
-          <form>
-            <input type="text" value="Safia" placeholder="Invite Someone" />
+          <form onSubmit={this.newGuestsubmitDetails}>
+            <input
+              onChange={this.handleNameIput}
+              type="text"
+              value={this.state.pendingGuest} placeholder="Invite Someone" />
             <button type="submit" name="submit" value="submit">Submit</button>
           </form>
         </header>
@@ -75,29 +123,25 @@ class App extends Component {
           <div>
             <h2>Invitees</h2>
             <label>
-              <input type="checkbox" /> Hide those who haven't responded
+              <input
+                onChange={this.toggleFiltered}
+                checked={this.state.isFiltered}
+                type="checkbox" /> Hide those who haven't responded
           </label>
           </div>
-          <table className="counter">
-            <tbody>
-              <tr>
-                <td>Attending:</td>
-                <td>2</td>
-              </tr>
-              <tr>
-                <td>Unconfirmed:</td>
-                <td>1</td>
-              </tr>
-              <tr>
-                <td>Total:</td>
-                <td>3</td>
-              </tr>
-            </tbody>
-          </table>
+          <Counter
+            totalNum={totalNum}
+            numAttending= {numAttending}
+            numUnconfirmed= {numUnconfirmed}
+          />
           <GuestList guests={this.state.guests}
-            toggleComfirmationAt={this.toggleComfirmationAt}
+            toggleConfirmationAt={this.toggleConfirmationAt}
             toggleEditingAt={this.toggleEditingAt}
-            setNameAt={this.setNameAt} />
+            setNameAt={this.setNameAt}
+            isFiltered={this.state.isFiltered}
+            removeGuestAt={this.removeGuestAt}
+            pendingGuest={this.state.pendingGuest}
+          />
         </div>
       </div>
     );
